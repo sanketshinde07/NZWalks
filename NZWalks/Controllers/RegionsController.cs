@@ -2,10 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using NZWalks.Data;
 using NZWalks.Models.Domain;
 using NZWalks.Models.DTO;
+using NZWalks.Repositories;
 
 // For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -16,30 +19,25 @@ namespace NZWalks.Controllers
     public class RegionsController : Controller
     {
         private readonly NZWalksDbContext DbContext;
+        private readonly IRegionRepository regionRepository;
+        private readonly IMapper mapper;
 
-        public RegionsController(NZWalksDbContext dbContext)
+        public RegionsController(NZWalksDbContext dbContext,IRegionRepository regionRepository, IMapper mapper)
         {
             DbContext = dbContext;
+            this.regionRepository = regionRepository;
+            this.mapper = mapper;
         }
 
         //GET all Regions
         //https://localhost:7294/api/Regions
         [HttpGet]
-        public IActionResult GetAll()
+        public async Task<IActionResult> GetAll()
         {
-            var regionsDomain = DbContext.Regions.ToList();
-            var regionsDto = new List<RegionDto>();
 
-            foreach (var regionData in regionsDomain)
-            {
-                regionsDto.Add(new RegionDto()
-                {
-                    Id = regionData.Id,
-                    Code = regionData.Code,
-                    Name = regionData.Name,
-                    RegionImageUrl = regionData.RegionImageUrl
-                });
-            }
+            var regionsDomain =await regionRepository.GetAllAsync();
+    
+            var regionsDto = mapper.Map<List<RegionDto>>(regionsDomain);
             return Ok(regionsDto);
         }
 
@@ -47,54 +45,31 @@ namespace NZWalks.Controllers
         //https://localhost:7294/api/Regions/{id}
         [HttpGet]
         [Route("{id:Guid}")]
-        public IActionResult GetByID([FromRoute] Guid id)
+        public async Task<IActionResult> GetByID([FromRoute] Guid id)
         {
-            var regionsDomain = DbContext.Regions.Find(id);
-
-            var regionsDto = new List<RegionDto>();
+            var regionsDomain =await regionRepository.GetById(id);
 
             if (regionsDomain == null)
             {
                 return NotFound();
             }
 
-            regionsDto.Add(new RegionDto()
-            {
-                Id = regionsDomain.Id,
-                Code = regionsDomain.Code,
-                Name = regionsDomain.Name,
-                RegionImageUrl = regionsDomain.RegionImageUrl
-            });
-
-
-            return Ok(regionsDto);
+            return Ok(mapper.Map<RegionDto>(regionsDomain));
 
         }
 
         //Create Region
         //https://localhost:7294/api/Regions/
         [HttpPost]
-        public IActionResult Create([FromBody] AddRegionRequestDto addRegionRequestDto)
+        public async Task<IActionResult> Create([FromBody] AddRegionRequestDto addRegionRequestDto)
         {
-            var regionDomainModel = new Region
-            {
-                Code = addRegionRequestDto.Code,
-                Name = addRegionRequestDto.Name,
-                RegionImageUrl = addRegionRequestDto.RegionImageUrl
-            };
+            var regionDomainModel = mapper.Map<Region>(addRegionRequestDto);
 
-            DbContext.Regions.Add(regionDomainModel);
-            DbContext.SaveChanges();
+            await regionRepository.Create(regionDomainModel);
 
-            var regionDto = new RegionDto
-            {
-                Id = regionDomainModel.Id,
-                Code = regionDomainModel.Code,
-                Name = regionDomainModel.Name,
-                RegionImageUrl = regionDomainModel.RegionImageUrl
-            };
+            var regionDto = mapper.Map<RegionDto>(regionDomainModel);
 
-            return CreatedAtAction(nameof(GetRegionByID), new { id = regionDto.Id }, regionDto);
+            return CreatedAtAction(nameof(GetByID), new { id = regionDto.Id }, regionDto);
         }
 
 
@@ -102,40 +77,25 @@ namespace NZWalks.Controllers
         //https://localhost:7294/api/Regions/{id}
         [HttpPut]
         [Route("{id:Guid}")]
-        public IActionResult Update([FromRoute] Guid id, [FromBody] UpdateRegionRequestDto updateRegionRequestDto)
+        public async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] UpdateRegionRequestDto updateRegionRequestDto)
         {
 
-            var regionDomainModel = DbContext.Regions.Find(id);
+            var regionDomainModel =await regionRepository.Update(id,updateRegionRequestDto);
             if (regionDomainModel == null)
             {
                 return NotFound();
             }
 
-            regionDomainModel.Code = updateRegionRequestDto.Code;
-            regionDomainModel.Name = updateRegionRequestDto.Name;
-            regionDomainModel.RegionImageUrl = updateRegionRequestDto.RegionImageUrl;
-
-
-            DbContext.SaveChanges();
-
-            var regionDto = new RegionDto
-            {
-                Id = regionDomainModel.Id,
-                Code = regionDomainModel.Code,
-                Name = regionDomainModel.Name,
-                RegionImageUrl = regionDomainModel.RegionImageUrl
-            };
-
-            return Ok(regionDto);
+            return Ok(mapper.Map<RegionDto>(regionDomainModel));
         }
 
         //Delete Region
         //https://localhost:7294/api/Regions/{id}
         [HttpDelete]
         [Route("{id:Guid}")]
-        public IActionResult Delete([FromRoute] Guid id)
+        public async Task<IActionResult> Delete([FromRoute] Guid id)
         {
-            var regionDomainModel = DbContext.Regions.FirstOrDefault(x=>x.Id==id);
+            var regionDomainModel = await DbContext.Regions.FirstOrDefaultAsync(x=>x.Id==id);
 
             if(regionDomainModel==null)
             {
@@ -144,7 +104,7 @@ namespace NZWalks.Controllers
 
             DbContext.Regions.Remove(regionDomainModel);
 
-            DbContext.SaveChanges();
+           await DbContext.SaveChangesAsync();
 
             var regionDto = new RegionDto
             {
@@ -154,7 +114,7 @@ namespace NZWalks.Controllers
                 RegionImageUrl = regionDomainModel.RegionImageUrl
             };
 
-            return Ok(regionDto);
+            return Ok(mapper.Map<RegionDto>(regionDomainModel));
 
         }
 
