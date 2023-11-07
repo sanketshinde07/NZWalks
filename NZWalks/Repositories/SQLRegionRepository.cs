@@ -15,9 +15,32 @@ namespace NZWalks.Repositories
             this.dbContext = dbContext;
         }
 
-        public async Task<List<Region>> GetAllAsync()
+        public async Task<List<Region>> GetAllAsync(string? filterBy=null,string? filterOn=null,string? sortBy=null,bool isAsscending=false,
+                                                     int pageNumber=1,int pageSize=2)
         {
-            return await dbContext.Regions.ToListAsync();
+            //return await dbContext.Regions.ToListAsync();
+            var lis =  dbContext.Regions.AsQueryable();
+
+            
+            //filtering
+            if (string.IsNullOrEmpty(filterBy) == false && string.IsNullOrEmpty(filterOn) == false)
+            {
+                if (filterBy.Equals("Name", StringComparison.OrdinalIgnoreCase))
+                {
+                        lis = lis.Where(x => x.Name.Contains(filterOn));
+                }
+            }
+
+            if( string.IsNullOrEmpty(sortBy)==false)
+            {
+                if (sortBy.Equals("Name", StringComparison.OrdinalIgnoreCase))
+                    lis = isAsscending ? lis.OrderBy(x => x.Name) : lis.OrderByDescending(x => x.Name);
+            }
+
+            var skipResults = (pageNumber - 1) * pageSize;
+
+            return await lis.Skip(skipResults).Take(pageSize).ToListAsync();
+
         }
 
         public async Task<Region?> GetById(Guid id)

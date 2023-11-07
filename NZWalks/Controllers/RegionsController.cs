@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NZWalks.Data;
@@ -16,6 +17,7 @@ namespace NZWalks.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class RegionsController : Controller
     {
         private readonly NZWalksDbContext DbContext;
@@ -32,10 +34,12 @@ namespace NZWalks.Controllers
         //GET all Regions
         //https://localhost:7294/api/Regions
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery]string? filterBy,[FromQuery]string? filterOn,
+                                                    [FromQuery]string? sortBy, [FromQuery]bool isAsscending,
+                                                       [FromQuery] int pageNumber, [FromQuery] int pageSize)
         {
 
-            var regionsDomain =await regionRepository.GetAllAsync();
+            var regionsDomain =await regionRepository.GetAllAsync(filterBy,filterOn,sortBy, isAsscending,pageNumber,pageSize);
     
             var regionsDto = mapper.Map<List<RegionDto>>(regionsDomain);
             return Ok(regionsDto);
