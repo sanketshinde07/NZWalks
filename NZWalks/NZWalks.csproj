@@ -23,6 +23,11 @@
     <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="7.0.3" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.0.3" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="7.0.13" />
+    <PackageReference Include="Serilog" Version="3.1.0" />
+    <PackageReference Include="Serilog.AspNetCore" Version="7.0.0" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="5.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning" Version="5.1.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -37,6 +42,9 @@
     <None Remove="Mappings\" />
     <None Remove="AutoMapper.Extensions.Microsoft.DependencyInjection" />
     <None Remove="CustomActionFilter\" />
+    <None Remove="Logs\" />
+    <None Remove="Middlewares\" />
+    <None Remove="Images\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Models\" />
@@ -46,5 +54,8 @@
     <Folder Include="Repositories\" />
     <Folder Include="Mappings\" />
     <Folder Include="CustomActionFilter\" />
+    <Folder Include="Logs\" />
+    <Folder Include="Middlewares\" />
+    <Folder Include="Images\" />
   </ItemGroup>
 </Project>

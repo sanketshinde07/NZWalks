@@ -36,7 +36,7 @@ namespace NZWalks.Controllers
 
         //Get all walks
         [HttpGet]
-        [Authorize(Roles ="Reader")]
+        [Authorize(Roles ="Reader,Writer")]
         //https://localhost:7294/api/Walks/
         public async Task<IActionResult> GetAllWalks()
         {
@@ -48,7 +48,7 @@ namespace NZWalks.Controllers
         //Get walk by ID
         [HttpGet]
         [Route("{id:Guid}")]
-        [Authorize(Roles = "Reader")]
+        [Authorize(Roles = "Reader,Writer")]
         //https://localhost:7294/api/Walks/{id}
         public async Task<IActionResult> GetWalkByID([FromRoute]Guid id)
         {

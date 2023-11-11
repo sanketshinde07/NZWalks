@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -17,31 +18,37 @@ namespace NZWalks.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
     public class RegionsController : Controller
     {
         private readonly NZWalksDbContext DbContext;
         private readonly IRegionRepository regionRepository;
         private readonly IMapper mapper;
+        private readonly ILogger<RegionsController> logger;
 
-        public RegionsController(NZWalksDbContext dbContext,IRegionRepository regionRepository, IMapper mapper)
+        public RegionsController(NZWalksDbContext dbContext,IRegionRepository regionRepository,
+            IMapper mapper,ILogger<RegionsController> logger)
         {
             DbContext = dbContext;
             this.regionRepository = regionRepository;
             this.mapper = mapper;
+            this.logger = logger;
         }
 
         //GET all Regions
         //https://localhost:7294/api/Regions
         [HttpGet]
+        [Authorize(Roles = "Reader,Writer")]
         public async Task<IActionResult> GetAll([FromQuery]string? filterBy,[FromQuery]string? filterOn,
                                                     [FromQuery]string? sortBy, [FromQuery]bool isAsscending,
                                                        [FromQuery] int pageNumber, [FromQuery] int pageSize)
         {
 
+            logger.LogInformation("GetAllRegions Method was invoked");
             var regionsDomain =await regionRepository.GetAllAsync(filterBy,filterOn,sortBy, isAsscending,pageNumber,pageSize);
     
             var regionsDto = mapper.Map<List<RegionDto>>(regionsDomain);
+            logger.LogInformation($"GetAllRegions Method was finished with data:{JsonSerializer.Serialize(regionsDto)}");
+
             return Ok(regionsDto);
         }
 
@@ -49,6 +56,7 @@ namespace NZWalks.Controllers
         //https://localhost:7294/api/Regions/{id}
         [HttpGet]
         [Route("{id:Guid}")]
+        [Authorize(Roles = "Reader,Writer")]
         public async Task<IActionResult> GetByID([FromRoute] Guid id)
         {
             var regionsDomain =await regionRepository.GetById(id);
@@ -65,6 +73,7 @@ namespace NZWalks.Controllers
         //Create Region
         //https://localhost:7294/api/Regions/
         [HttpPost]
+        [Authorize(Roles = "Writer")]
         public async Task<IActionResult> Create([FromBody] AddRegionRequestDto addRegionRequestDto)
         {
             var regionDomainModel = mapper.Map<Region>(addRegionRequestDto);
@@ -81,6 +90,7 @@ namespace NZWalks.Controllers
         //https://localhost:7294/api/Regions/{id}
         [HttpPut]
         [Route("{id:Guid}")]
+        [Authorize(Roles = "Writer")]
         public async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] UpdateRegionRequestDto updateRegionRequestDto)
         {
 
@@ -97,6 +107,7 @@ namespace NZWalks.Controllers
         //https://localhost:7294/api/Regions/{id}
         [HttpDelete]
         [Route("{id:Guid}")]
+        [Authorize(Roles = "Writer")]
         public async Task<IActionResult> Delete([FromRoute] Guid id)
         {
             var regionDomainModel = await DbContext.Regions.FirstOrDefaultAsync(x=>x.Id==id);
